@@ -17,9 +17,9 @@ def find_dupe_frequency(arr)
 
   while true
     frequencies = prefix_sums(arr, last_frequency).drop(1)
-    frequencies.each do |sum|
-      return sum if frequencies_seen[sum]
-      frequencies_seen[sum] = true
+    frequencies.each do |f|
+      return f if frequencies_seen[f]
+      frequencies_seen[f] = true
     end
 
     last_frequency = frequencies.last
