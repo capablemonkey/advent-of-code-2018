@@ -14,8 +14,8 @@ def contains_n_of_one_letter?(word, n)
 end
 
 def checksum(words)
-  contains_2_count = words.map {|word| contains_n_of_one_letter?(word, 2) }.select {|x| x == true}.count
-  contains_3_count = words.map {|word| contains_n_of_one_letter?(word, 3) }.select {|x| x == true}.count
+  contains_2_count = words.map {|word| contains_n_of_one_letter?(word, 2) }.count(true)
+  contains_3_count = words.map {|word| contains_n_of_one_letter?(word, 3) }.count(true)
   contains_2_count * contains_3_count
 end
 
@@ -28,8 +28,7 @@ def differ_by_1_char?(word_a, word_b)
     each_char.
     zip(word_b.each_char).
     map {|a, b| a == b}.
-    select {|x| x == false}.
-    count == 1
+    count(false) == 1
 end
 
 def find_similar(words)
