@@ -12,49 +12,39 @@ def parse_claim(string)
   }
 end
 
-# Part 1
+def build_grid(claims)
+  grid = (0...1000).map {|_| [0] * 1000}
 
-def claim_includes?(x, y, claim)
-  return true if (
-    x >= claim[:x] &&
-    x < claim[:x] + claim[:width] &&
-    y >= claim[:y] &&
-    y < claim[:y] + claim[:height]
-  )
-  false
-end
-
-def count_claims_at(x, y, claims)
-  claims.map {|claim| claim_includes?(x, y, claim)}.count(true)
-end
-
-def part_1(claims)
-  intersect_count = 0
-
-  (0...1000).each do |x|
-    (0...1000).each do |y|
-      intersect_count += 1 if count_claims_at(x, y, claims) >= 2
+  claims.each do |claim|
+    (claim[:x]...(claim[:x] + claim[:width])).each do |x|
+      (claim[:y]...(claim[:y] + claim[:height])).each do |y|
+        grid[y][x] += 1
+      end
     end
   end
 
-  intersect_count
+  grid
 end
 
-# Part 2
+def part_1(claims, grid)
+  grid.map {|column| column.count {|point| point >= 2}}.reduce(:+)
+end
 
-def check_pure(claim, claims)
+def check_pure(claim, grid)
   (claim[:x]...(claim[:x] + claim[:width])).each do |x|
     (claim[:y]...(claim[:y] + claim[:height])).each do |y|
-      return false if count_claims_at(x, y, claims) > 1
+      return false if grid[y][x] > 1
     end
   end
-  true
+
+  return true
 end
 
-def part_2(claims)
-  claims.select {|c| check_pure(c, claims) }
+def part_2(claims, grid)
+  claims.select {|c| check_pure(c, grid) }
 end
 
 claims = input_lines.map { |line| parse_claim(line) }
-puts part_1(claims)
-puts part_2(claims)
+grid = build_grid(claims)
+puts part_1(claims, grid)
+puts part_2(claims, grid)
