@@ -12,15 +12,19 @@ def parse_claim(string)
   }
 end
 
+def each_cell_of(claim)
+  (claim[:x]...(claim[:x] + claim[:width])).each do |x|
+    (claim[:y]...(claim[:y] + claim[:height])).each do |y|
+      yield [x, y]
+    end
+  end
+end
+
 def build_grid(claims)
   grid = (0...1000).map {|_| [0] * 1000}
 
   claims.each do |claim|
-    (claim[:x]...(claim[:x] + claim[:width])).each do |x|
-      (claim[:y]...(claim[:y] + claim[:height])).each do |y|
-        grid[y][x] += 1
-      end
-    end
+    each_cell_of(claim) {|x, y| grid[y][x] += 1}
   end
 
   grid
@@ -31,13 +35,8 @@ def part_1(claims, grid)
 end
 
 def check_pure(claim, grid)
-  (claim[:x]...(claim[:x] + claim[:width])).each do |x|
-    (claim[:y]...(claim[:y] + claim[:height])).each do |y|
-      return false if grid[y][x] > 1
-    end
-  end
-
-  return true
+  each_cell_of(claim) {|x, y| return false if grid[y][x] > 1 }
+  true
 end
 
 def part_2(claims, grid)
