@@ -27,12 +27,10 @@ def parse_sleeps(lines)
   sleeps
 end
 
-
 def slept_most(sleeps)
   sleeps.
-    map {|s| [s[:guard], s[:end] - s[:start]]}.
-    group_by {|guard, durations| guard}.
-    map {|guard, durations| [guard, durations.map(&:last).reduce(&:+)]}.
+    group_by {|s| s[:guard]}.
+    map {|guard, sleeps| [guard, sleeps.map {|s| s[:end] - s[:start]}.reduce(&:+)]}.
     max_by {|guard, sum| sum}.
     first
 end
@@ -40,7 +38,8 @@ end
 def most_freq_minute(sleeps)
   (0...60).
     map {|min| [min, sleeps.count {|s| min >= s[:start] && min < s[:end]}]}.
-    max_by {|min, count| count}[0]
+    max_by {|min, count| count}.
+    first
 end
 
 def part_1(sleeps)
@@ -50,11 +49,19 @@ def part_1(sleeps)
   guard * min
 end
 
+def most_frequent_guard(sleeps)
+  sleeps.
+    group_by {|s| s[:guard]}.
+    map{|guard, tallies| [guard, tallies.count]}.
+    max_by {|guard, count| count}
+end
+
 def part_2(sleeps)
-  (0...60).
-    map {|min| [min, sleeps.select {|s| min >= s[:start] && min < s[:end]}]}.
-    map {|min, slps| [min, slps.group_by {|slp| slp[:guard]}.map{|guard, tallies| [guard, tallies.count]}.max_by {|guard, count| count}]}.
-    max_by {|min, k| k[1] }
+  min, guard, count = (0...60).
+    map { |min| [min, sleeps.select {|s| min >= s[:start] && min < s[:end]}] }.
+    map { |min, slps| [min, most_frequent_guard(slps)].flatten }.
+    max_by {|min, guard, count| count ? count : 0 }
+  min * guard
 end
 
 sleeps = parse_sleeps(input_lines)
