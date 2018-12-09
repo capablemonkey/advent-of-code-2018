@@ -40,6 +40,8 @@ def highest_score(players, last_marble)
   scores.max_by {|player, score| score}[1]
 end
 
+# Optimized version of the above:
+
 class LinkedListNode
   attr_accessor :value, :prev, :next
 
@@ -87,5 +89,10 @@ end
 # puts highest_score(9, 25)
 # puts highest_score(9, 100)
 # puts highest_score(10, 1618)
+
+require 'benchmark'
+puts Benchmark.measure("array") { highest_score(425, 200_000) }
+puts Benchmark.measure("linked list") { highest_score_optimized(425, 200_000) }
+
 puts highest_score_optimized(425, 70848)
 puts highest_score_optimized(425, 70848 * 100)
