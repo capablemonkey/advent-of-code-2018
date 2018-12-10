@@ -2,39 +2,27 @@ input_lines = File.new('day-05-input.txt').readlines
 input = input_lines[0].strip
 
 def react(string)
-  k = ""
-  ignore_next = false
-  string.each_char.each_with_index do |c, idx|
-    if ignore_next
-      ignore_next = false
-      next
-    end
+  input = string.each_char.to_a
+  output = [input.shift]
 
-    next_char = string[idx + 1]
+  until input.empty?
+    output += input.shift(1)
 
-    if next_char && (c != next_char) && (c.downcase == next_char.downcase)
-      ignore_next = true
-    else
-      k += c
+    if (output[-2]) && (output[-2] != output[-1]) && (output[-2].downcase == output[-1].downcase)
+      output.pop(2)
     end
   end
 
-  k
-end
-
-def fully_react(string)
-  k = react(string)
-  return k if k == string
-  fully_react(k)
+  output.join('')
 end
 
 def part_2(string)
   ('a'..'z').
     map {|letter| string.gsub(letter, '').gsub(letter.upcase, '')}.
-    map {|str| fully_react(str).size}.
+    map {|str| react(str).size}.
     min
 end
 
-fully_reacted = fully_react(input)
-puts fully_reacted.size
-puts part_2(fully_reacted)
+reacted = react(input)
+puts reacted.size
+puts part_2(reacted)
