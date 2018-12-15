@@ -50,6 +50,9 @@ def tick(state, carts)
   carts = carts.sort_by {|c| [c[:y], c[:x]] }
 
   carts = carts.map do |c|
+    next if c[:crashed]
+
+    # determine if direction needs to be changed based on the kind of track the cart is on
     if c[:underlying_track] == '/' || c[:underlying_track] == '\\'
       c[:direction] = TRACK_TURNS[c[:direction]][c[:underlying_track]]
     elsif c[:underlying_track] == '+'
@@ -62,22 +65,41 @@ def tick(state, carts)
       c[:next_turn] = c[:next_turn].rotate
     end
 
+    # based on direction, determine where the next cell is
     direction = DIRECTIONS[c[:direction]]
     next_cell_y = c[:y] + direction[:y]
     next_cell_x = c[:x] + direction[:x]
     next_cell = state[next_cell_y][next_cell_x]
 
-    raise "collision at #{next_cell_x},#{next_cell_y}!" if DIRECTIONS.keys.include?(next_cell)
+    # handle collision
+    if DIRECTIONS.keys.include?(next_cell)
+      # find the other cart
+      crashee = carts.detect {|k| k[:x] == next_cell_x && k[:y] == next_cell_y}
 
-    state[c[:y]][c[:x]] = c[:underlying_track]
-    c[:underlying_track] = next_cell
-    state[next_cell_y][next_cell_x] = c[:direction]
-    c[:x] = next_cell_x
-    c[:y] = next_cell_y
+      # replace the tiles
+      state[c[:y]][c[:x]] = c[:underlying_track]
+      state[crashee[:y]][crashee[:x]] = crashee[:underlying_track]
+
+      # flag carts as crashed
+      c[:crashed] = true
+      crashee[:crashed] = true
+    else
+      # mutate state to move to that cell
+      state[c[:y]][c[:x]] = c[:underlying_track]
+      c[:underlying_track] = next_cell
+      state[next_cell_y][next_cell_x] = c[:direction]
+      c[:x] = next_cell_x
+      c[:y] = next_cell_y
+    end
+
     c
   end
 
-  [state, carts]
+  # raise if only one cart left
+  remaining_carts = carts.reject(&:nil?).reject{ |c| c[:crashed] == true }
+  raise "last one! #{remaining_carts.first}" if remaining_carts.size == 1
+
+  [state, remaining_carts]
 end
 
 def show(state)
@@ -89,9 +111,9 @@ carts = parse_carts(initial_state)
 s = initial_state
 c = carts
 
-(1..1000).each do |i|
+(1..20_000).each do |i|
   puts "turn #{i}"
   s, c = tick(s, c)
-  show(s)
+  # show(s)
   # ap c
 end
