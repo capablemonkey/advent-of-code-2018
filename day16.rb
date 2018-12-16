@@ -121,20 +121,23 @@ def part1(samples)
 end
 
 def infer_opcodes(samples)
-  opcode_to_matches = Hash.new {|h,x| h[x] = []}
-  samples.each do |s|
-    opcode = s[:instr][0]
-    opcode_to_matches[opcode].push(matches(s[:before], s[:instr], s[:after]))
-  end
+  # for each sample, find the candidate operations
+  # group samples by opcode, then for each opcode find the common candidate operations between samples
+  opcode_to_ops = samples.
+    map {|s| [s[:instr][0], matches(s[:before], s[:instr], s[:after])]}.
+    group_by {|opcode, _| opcode }.
+    map {|k,v| [k,v.map(&:last)]}.
+    map {|opcode, matches| [opcode, matches.reduce {|acc, m| acc & m}] }
 
-  opcode_to_possible_operations = opcode_to_matches.map {|opcode, matches| [opcode, matches.reduce {|acc, m| acc & m}] }
   opcodes = {}
 
-  until opcode_to_possible_operations.empty?
-    opcode, possible_ops = opcode_to_possible_operations.detect {|opcode, possible_ops| possible_ops.size == 1 }
+  # find the opcode with only one candidate operation. remove that operation as a possiblility for all other opcodes
+  # then repeat until all operations matched with an opcode
+  until opcode_to_ops.empty?
+    opcode, possible_ops = opcode_to_ops.detect {|opcode, possible_ops| possible_ops.size == 1 }
     opcodes[opcode] = possible_ops.first
-    opcode_to_possible_operations = opcode_to_possible_operations.reject {|opc, possible_ops| opc == opcode}
-    opcode_to_possible_operations = opcode_to_possible_operations.map {|opc, possible_ops| [opc, possible_ops - [opcodes[opcode]]] }
+    opcode_to_ops = opcode_to_ops.reject {|opc, possible_ops| opc == opcode}
+    opcode_to_ops = opcode_to_ops.map {|opc, possible_ops| [opc, possible_ops - [opcodes[opcode]]] }
   end
 
   opcodes
