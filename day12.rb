@@ -1,25 +1,4 @@
 input_lines = File.new('day-12-input.txt').readlines
-require 'ap'
-
-
-## sample
-# initial_state = "#..#.#..##......###...###"
-# input = """...## => #
-# ..#.. => #
-# .#... => #
-# .#.#. => #
-# .#.## => #
-# .##.. => #
-# .#### => #
-# #.#.# => #
-# #.### => #
-# ##.#. => #
-# ##.## => #
-# ###.. => #
-# ###.# => #
-# ####. => #
-# """
-# transforms = Hash[input.split("\n").map {|l| l.strip.split(' => ')}]
 
 def next_generation(state, transforms)
   n_pots = state.size
@@ -34,19 +13,30 @@ def next_generation(state, transforms)
   chars.join
 end
 
-def part_1(initial_state, transforms)
-  padded_initial_state = ("." * 20) + initial_state + ("." * 20)
-  next_state = next_generation(padded_initial_state, transforms)
-  19.times {|i| next_state = next_generation(next_state, transforms) }
+def planted_pot_numbers(state, num_right_pots)
+  state.each_char.
+    map.with_index { |c, i| c == '#' ? i - num_right_pots : 0 }.
+    reject {|p| p == 0}
+end
 
-  values = next_state.each_char.map.with_index do |c, i|
-    c == '#' ? i - 20 : 0
+def spread(initial_state, transforms, n_generations)
+  left_pad = 10
+  right_pad = 200
+  padded_initial_state = ("." * left_pad) + initial_state + ("." * right_pad)
+  state = padded_initial_state
+
+  n_generations.times do |i|
+    # nums = planted_pot_numbers(state, left_pad)
+    # puts "#{i}, #{nums.sum}, #{nums.size} , #{nums}\n\n"
+    # puts state
+    state = next_generation(state, transforms)
   end
 
-  values.sum
+  planted_pot_numbers(state, left_pad).sum
 end
 
 initial_state = "#.##.##.##.##.......###..####..#....#...#.##...##.#.####...#..##..###...##.#..#.##.#.#.#.#..####..#"
 transforms = Hash[input_lines.map {|l| l.strip.split(' => ')}]
 
-ap part_1(initial_state, transforms)
+puts spread(initial_state, transforms, 20)
+# puts spread(initial_state, transforms, 200)
