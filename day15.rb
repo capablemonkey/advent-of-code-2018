@@ -1,6 +1,7 @@
 require 'ap'
 
 input_lines = File.new('day-15-input-sample.txt').readlines
+input_lines = File.new('day-15-input.txt').readlines
 
 DIRECTIONS = {
   'v' => {x: 0, y: 1},
@@ -37,10 +38,10 @@ def find_attack_target(unit, state)
     reject {|n| unit[:type] == n[:type]}.
     sort_by {|t| t[:hp]} # todo: use multi value sort
 
-  ap :neighbors
-  ap neighbors
-  ap :targets
-  ap targets
+  # ap :neighbors
+  # ap neighbors
+  # ap :targets
+  # ap targets
 
   # break ties by "up-down, left-right" order
   ties = targets.partition {|t| t[:hp] == targets.first[:hp]}.first
@@ -186,8 +187,8 @@ def act(unit, state)
       raise "no enemies left! total hp: #{total_hp}"
     end
 
-    ap :enemies
-    ap enemies
+    # ap :enemies
+    # ap enemies
 
     # determine cells adjacent to those enemies
     adjacent_cells = enemies.
@@ -200,12 +201,12 @@ def act(unit, state)
     reachable_cells = reachable_cells(new_unit[:x], new_unit[:y], new_state[:world])
     candidate_destinations = adjacent_cells & reachable_cells
 
-    preview_world = new_state[:world].map(&:dup)
-    # show possible locations
-    candidate_destinations.each do |x,y|
-      preview_world[y][x] = '*'
-    end
-    ap preview_world
+    # preview_world = new_state[:world].map(&:dup)
+    # # show possible locations
+    # candidate_destinations.each do |x,y|
+    #   preview_world[y][x] = '*'
+    # end
+    # ap preview_world
 
     # find the closest location by shortest parth
     # break location ties by reading order
@@ -213,8 +214,8 @@ def act(unit, state)
       map {|x, y| [[x,y], djikstra(new_state[:world], new_unit[:x], new_unit[:y], x, y).size]}.
       sort_by {|destination, dist| [dist, destination[1], destination[0]]}
 
-    ap "distances to candidate destinations"
-    ap distances
+    # ap "distances to candidate destinations"
+    # ap distances
 
     if distances.empty?
       new_unit[:moved] = true
@@ -251,6 +252,18 @@ def act(unit, state)
     new_state[:world][move[1]][move[0]] = new_unit[:type]
     new_unit[:x] = move[0]
     new_unit[:y] = move[1]
+
+    target = find_attack_target(new_unit, new_state)
+
+    if target # then attack
+      target[:hp] -= new_unit[:attack]
+
+      # if HP 0, remove unit from world and units list
+      if target[:hp] <= 0
+        target[:deleted] = true
+        new_state[:world][target[:y]][target[:x]] = '.'
+      end
+    end
   end
 
   new_unit[:moved] = true
@@ -283,7 +296,7 @@ def part_1(world)
 
   s = deep_copy(initial_state)
 
-  (1..48).each do |round|
+  (1..1000).each do |round|
     puts "round #{round}"
 
     s = reset_moved_flag(s)
