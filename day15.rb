@@ -1,6 +1,6 @@
 require 'ap'
 
-input_lines = File.new('day-15-input-sample.txt').readlines
+# input_lines = File.new('day-15-input-sample.txt').readlines
 input_lines = File.new('day-15-input.txt').readlines
 
 DIRECTIONS = {
@@ -73,34 +73,45 @@ def map_each_cell(world)
   end
 end
 
+DJ_GRAPH_MEMO = {}
+
 # return shortest path between two points
 def djikstra(world, from_x, from_y, to_x, to_y)
-  nodes = map_each_cell(world) {|cell, x, y| cell == '.' ? [x, y] : nil }.
-    flatten(1).
-    reject(&:nil?)
+  key = [world.join, from_x, from_y].join(',')
+  cached_prev = DJ_GRAPH_MEMO[key]
 
-  source = [from_x, from_y]
-  dist = Hash[nodes.zip([INFINITY].cycle)]
-  queue = nodes.dup
-  queue.push(source) unless queue.include?(source)
-  dist[source] = 0
-  prev = {}
+  prev = cached_prev
 
-  while !queue.empty?
-    queue.sort_by! {|node| dist[node]}
-    u = queue.shift
+  unless cached_prev
+    nodes = map_each_cell(world) {|cell, x, y| cell == '.' ? [x, y] : nil }.
+      flatten(1).
+      reject(&:nil?)
 
-    neighbors = DIRECTIONS.values.map {|d| [u[0] + d[:x], u[1] + d[:y]] }
-    neighbors = neighbors & nodes
+    source = [from_x, from_y]
+    dist = Hash[nodes.zip([INFINITY].cycle)]
+    queue = nodes.dup
+    queue.push(source) unless queue.include?(source)
+    dist[source] = 0
+    prev = {}
 
-    neighbors.each do |v|
-      alt = dist[u] + 1
+    while !queue.empty?
+      queue.sort_by! {|node| dist[node]}
+      u = queue.shift
 
-      if alt < dist[v]
-        dist[v] = alt
-        prev[v] = u
+      neighbors = DIRECTIONS.values.map {|d| [u[0] + d[:x], u[1] + d[:y]] }
+      neighbors = neighbors & nodes
+
+      neighbors.each do |v|
+        alt = dist[u] + 1
+
+        if alt < dist[v]
+          dist[v] = alt
+          prev[v] = u
+        end
       end
     end
+
+    DJ_GRAPH_MEMO[key] ||= prev
   end
 
   path = []
@@ -200,8 +211,7 @@ def act(unit, state)
     move = determine_move(new_unit, new_state)
 
     if move
-      # move one step in that direction
-      # update world
+      # move one step in that direction & update world
       new_state[:world][new_unit[:y]][new_unit[:x]] = '.'
       new_state[:world][move[1]][move[0]] = new_unit[:type]
       new_unit[:x] = move[0]
@@ -246,14 +256,9 @@ def next_unit_to_move(state)
     first
 end
 
-def part_1(world)
-  units = parse_units(world)
-  initial_state = {world: world, units: units}
+def play_until_condition(state)
+  s = deep_copy(state)
   round = 0
-
-  ap world
-
-  s = deep_copy(initial_state)
 
   (1..1000).each do |round|
     puts "round #{round}"
@@ -264,11 +269,42 @@ def part_1(world)
 
     while !next_unit.nil?
       s = act(next_unit, s)
+
+      continue = yield(s)
+      return continue unless continue == true
+      # ap s[:world]
       next_unit = next_unit_to_move(s)
-      ap s[:world]
     end
   end
 end
 
+def part_1(initial_state)
+  play_until_condition(initial_state) { true }
+end
+
+def part_2(initial_state)
+  (4..100).each do |attack|
+    ap "attack: #{attack}"
+
+    s = deep_copy(initial_state)
+    s[:units] = s[:units].map {|u| u[:attack] = attack if u[:type] == 'E'; u }
+
+    result = play_until_condition(s) do |k|
+      if k[:units].any? {|u| u[:deleted] && u[:type] == 'E'}
+        :elf_died
+      else
+        true
+      end
+    end
+
+    next if result == :elf_died
+  end
+end
+
 world = input_lines.map(&:strip)
-part_1(world)
+units = parse_units(world)
+initial_state = {world: world, units: units}
+ap world
+
+part_1(initial_state)
+part_2(initial_state)
