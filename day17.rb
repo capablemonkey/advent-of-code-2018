@@ -79,21 +79,19 @@ def drip(grid)
     left = [x - 1, y]
     right = [x + 1, y]
 
-    if cell == '.'
-      if floor_below || water_below
-        queue.push(left)
-        queue.push(right)
+    if cell == '.' && (floor_below || water_below)
+      queue.push(left)
+      queue.push(right)
 
-        if check_bounded_right(grid, x, y) && check_bounded_left(grid, x, y)
-          grid[y][x] = '~'
-        else
-          grid[y][x] = '|'
-        end
+      if check_bounded_right(grid, x, y) && check_bounded_left(grid, x, y)
+        grid[y][x] = '~'
       else
-        queue.push([x, y])
-        queue.push([x, y + 1])
         grid[y][x] = '|'
       end
+    elsif cell == '.'
+      queue.push([x, y])
+      queue.push([x, y + 1])
+      grid[y][x] = '|'
     elsif cell == '|' && (water_below || floor_below)
       queue.push(left) unless visited.include?(left)
       queue.push(right) unless visited.include?(right)
